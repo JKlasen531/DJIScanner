@@ -55,6 +55,17 @@ public class DJIScannerApplication extends Application{
         return mProduct;
     }
 
+    public static boolean isAircraftConnected() {
+        return getProductInstance() != null && getProductInstance() instanceof Aircraft;
+    }
+
+    public static synchronized Aircraft getAircraftInstance() {
+        if (!isAircraftConnected()) {
+            return null;
+        }
+        return (Aircraft) getProductInstance();
+    }
+
     public static synchronized Camera getCameraInstance() {
 
         if (getProductInstance() == null) return null;

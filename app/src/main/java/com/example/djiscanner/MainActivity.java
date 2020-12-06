@@ -25,12 +25,15 @@ import dji.sdk.base.BaseProduct;
 import dji.sdk.camera.Camera;
 import dji.sdk.camera.VideoFeeder;
 import dji.sdk.codec.DJICodecManager;
+import dji.sdk.products.Aircraft;
+import dji.sdk.remotecontroller.RemoteController;
 import dji.sdk.useraccount.UserAccountManager;
 
 public class MainActivity extends Activity implements SurfaceTextureListener, OnClickListener{
 
     private static final String TAG = MainActivity.class.getName();
     protected VideoFeeder.VideoDataListener mReceivedVideoDataListener = null;
+    private RemoteController remoteController;
 
     // Codec for video live view
     protected DJICodecManager mCodecManager = null;
@@ -102,6 +105,19 @@ public class MainActivity extends Activity implements SurfaceTextureListener, On
             });
 
         }
+
+        if ((null != DJIScannerApplication.getProductInstance())
+                && (DJIScannerApplication.getProductInstance() instanceof Aircraft)
+                && (null != DJIScannerApplication.getAircraftInstance().getRemoteController())) {
+            remoteController = ((Aircraft) DJIScannerApplication.getProductInstance()).getRemoteController();
+            if(remoteController.isCustomizableButtonSupported()) {
+                setupCustomizableButtons();
+            }
+        }
+
+    }
+
+    private void setupCustomizableButtons() {
 
     }
 
