@@ -15,16 +15,33 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import androidx.annotation.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import dji.common.camera.SettingsDefinitions;
 import dji.common.camera.SystemState;
 import dji.common.error.DJIError;
+import dji.common.gimbal.Attitude;
+import dji.common.gimbal.Rotation;
 import dji.common.product.Model;
 import dji.common.useraccount.UserAccountState;
 import dji.common.util.CommonCallbacks;
+import dji.sdk.flightcontroller.FlightController;
 import dji.sdk.base.BaseProduct;
 import dji.sdk.camera.Camera;
 import dji.sdk.camera.VideoFeeder;
 import dji.sdk.codec.DJICodecManager;
+import dji.sdk.mission.MissionControl;
+import dji.sdk.mission.Triggerable;
+import dji.sdk.mission.timeline.TimelineElement;
+import dji.sdk.mission.timeline.TimelineEvent;
+import dji.sdk.mission.timeline.actions.GimbalAttitudeAction;
+import dji.sdk.mission.timeline.actions.ShootPhotoAction;
+import dji.sdk.mission.timeline.triggers.BatteryPowerLevelTrigger;
+import dji.sdk.mission.timeline.triggers.Trigger;
+import dji.sdk.mission.timeline.triggers.TriggerEvent;
 import dji.sdk.products.Aircraft;
 import dji.sdk.remotecontroller.RemoteController;
 import dji.sdk.useraccount.UserAccountManager;
@@ -32,11 +49,25 @@ import dji.sdk.useraccount.UserAccountManager;
 public class MainActivity extends Activity implements SurfaceTextureListener, OnClickListener{
 
     private static final String TAG = MainActivity.class.getName();
-    protected VideoFeeder.VideoDataListener mReceivedVideoDataListener = null;
     private RemoteController remoteController;
+    private BaseProduct baseProduct;
 
     // Codec for video live view
+    protected VideoFeeder.VideoDataListener mReceivedVideoDataListener = null;
     protected DJICodecManager mCodecManager = null;
+
+    private MissionControl missionControl;
+    private FlightController flightController;
+    private TimelineEvent preEvent;
+    private TimelineElement preElement;
+    private DJIError preError;
+
+    private Trigger.Listener triggerListener = new Trigger.Listener() {
+        @Override
+        public void onEvent(Trigger trigger, TriggerEvent event, @Nullable DJIError djiError) {
+            //things that happen when a trigger occures
+        }
+    };
 
     protected TextureView mVideoSurface = null;
     private Button mCaptureBtn, mShootPhotoModeBtn, mRecordVideoModeBtn;
@@ -47,13 +78,22 @@ public class MainActivity extends Activity implements SurfaceTextureListener, On
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        initUI();
 
+        baseProduct = DJIScannerApplication.getProductInstance();
+        setContentView(R.layout.activity_main);
         handler = new Handler();
 
-        initUI();
+        //Flight and Mission Controller
+        if(baseProduct == null || baseProduct.isConnected()) {
+            missionControl = null;
+        } else {
+            missionControl =    MissionControl.getInstance();
+            if(DJIScannerApplication.isAircraftConnected()) {
+                flightController = ((Aircraft) baseProduct).getFlightController();
+            }
+        }
 
         // The callback for receiving the raw H264 video data for camera live view
         mReceivedVideoDataListener = new VideoFeeder.VideoDataListener() {
@@ -66,8 +106,8 @@ public class MainActivity extends Activity implements SurfaceTextureListener, On
             }
         };
 
+        //Camera
         Camera camera = DJIScannerApplication.getCameraInstance();
-
         if (camera != null) {
 
             camera.setSystemStateCallback(new SystemState.Callback() {
@@ -106,6 +146,7 @@ public class MainActivity extends Activity implements SurfaceTextureListener, On
 
         }
 
+        //Remote Controller
         if ((null != DJIScannerApplication.getProductInstance())
                 && (DJIScannerApplication.getProductInstance() instanceof Aircraft)
                 && (null != DJIScannerApplication.getAircraftInstance().getRemoteController())) {
@@ -117,8 +158,9 @@ public class MainActivity extends Activity implements SurfaceTextureListener, On
 
     }
 
-    private void setupCustomizableButtons() {
+    //RemoteControl
 
+    private void setupCustomizableButtons() {
     }
 
     protected void onProductChange() {
@@ -293,6 +335,8 @@ public class MainActivity extends Activity implements SurfaceTextureListener, On
         }
     }
 
+    //Camera Methods
+
     private void switchCameraMode(SettingsDefinitions.CameraMode cameraMode){
 
         Camera camera = DJIScannerApplication.getCameraInstance();
@@ -374,12 +418,76 @@ public class MainActivity extends Activity implements SurfaceTextureListener, On
                 {
                     if(djiError == null) {
                         showToast("Stop recording: success");
-                    }else {
+                    } else {
                         showToast(djiError.getDescription());
                     }
                 }
             }); // Execute the stopRecordVideo API
         }
 
+    }
+
+    //TimelineMissionControl
+
+    private void initTimeline() {
+
+        List<TimelineElement> elements = new ArrayList<>();
+
+        missionControl = MissionControl.getInstance();
+        final TimelineEvent preEvent = null;
+        MissionControl.Listener listener = new MissionControl.Listener() {
+            @Override
+            public void onEvent(TimelineElement timelineElement, TimelineEvent timelineEvent, DJIError djiError) {
+                updateTimelineStatus(timelineElement, timelineEvent, djiError);
+            }
+        };
+
+        //Mission example steps:
+        //reset the gimbal to horizontal angle in 2 seconds
+        Attitude attitude = new Attitude(-30, Rotation.NO_ROTATION, Rotation.NO_ROTATION);
+        GimbalAttitudeAction gimbalAction = new GimbalAttitudeAction(attitude);
+        gimbalAction.setCompletionTime(2);
+        elements.add(gimbalAction);
+
+        //take a single photo
+        elements.add(ShootPhotoAction.newShootSinglePhotoAction());
+
+        //Missions e.g. Waypoint Missions are also addable to the elements ArrayList
+
+        addBatteryPowerLevelTrigger(missionControl);
+    }
+
+    private void updateTimelineStatus(TimelineElement timelineElement, TimelineEvent timelineEvent, DJIError djiError) {
+    }
+
+    private void addBatteryPowerLevelTrigger(Triggerable triggerTarget) {
+        float value = 20.0f;
+        BatteryPowerLevelTrigger trigger = new BatteryPowerLevelTrigger();
+        trigger.setPowerPercentageTriggerValue(value);
+        addTrigger(trigger, triggerTarget, " at level " + value);
+    }
+
+    private void addTrigger(Trigger trigger, Triggerable triggerTarget, String additionalComment) {
+
+        if (triggerTarget != null) {
+
+            initTrigger(trigger);
+            List<Trigger> triggers = triggerTarget.getTriggers();
+            if(triggers == null) {
+                triggers = new ArrayList<>();
+            }
+
+            triggers.add(trigger);
+            triggerTarget.setTriggers(triggers);
+        }
+    }
+
+    private void initTrigger(Trigger trigger) {
+        trigger.addListener(triggerListener);
+        trigger.setAction(new Trigger.Action() {
+            @Override
+            public void onCall() {
+            }
+        });
     }
 }
