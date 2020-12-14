@@ -15,9 +15,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import dji.common.camera.SettingsDefinitions;
@@ -25,6 +27,12 @@ import dji.common.camera.SystemState;
 import dji.common.error.DJIError;
 import dji.common.gimbal.Attitude;
 import dji.common.gimbal.Rotation;
+import dji.common.mission.waypoint.Waypoint;
+import dji.common.mission.waypoint.WaypointMission;
+import dji.common.mission.waypoint.WaypointMissionFinishedAction;
+import dji.common.mission.waypoint.WaypointMissionFlightPathMode;
+import dji.common.mission.waypoint.WaypointMissionGotoWaypointMode;
+import dji.common.mission.waypoint.WaypointMissionHeadingMode;
 import dji.common.product.Model;
 import dji.common.useraccount.UserAccountState;
 import dji.common.util.CommonCallbacks;
@@ -37,6 +45,7 @@ import dji.sdk.mission.MissionControl;
 import dji.sdk.mission.Triggerable;
 import dji.sdk.mission.timeline.TimelineElement;
 import dji.sdk.mission.timeline.TimelineEvent;
+import dji.sdk.mission.timeline.TimelineMission;
 import dji.sdk.mission.timeline.actions.GimbalAttitudeAction;
 import dji.sdk.mission.timeline.actions.ShootPhotoAction;
 import dji.sdk.mission.timeline.triggers.BatteryPowerLevelTrigger;
@@ -46,7 +55,7 @@ import dji.sdk.products.Aircraft;
 import dji.sdk.remotecontroller.RemoteController;
 import dji.sdk.useraccount.UserAccountManager;
 
-public class MainActivity extends Activity implements SurfaceTextureListener, OnClickListener{
+public class MainActivity extends Activity implements TextureView.SurfaceTextureListener, OnClickListener{
 
     private static final String TAG = MainActivity.class.getName();
     private RemoteController remoteController;
@@ -455,6 +464,79 @@ public class MainActivity extends Activity implements SurfaceTextureListener, On
         //Missions e.g. Waypoint Missions are also addable to the elements ArrayList
 
         addBatteryPowerLevelTrigger(missionControl);
+    }
+
+    private void updateTimlineStatus(@Nullable TimelineElement element, TimelineEvent event, DJIError error) {
+
+        if(element == preElement && event == preEvent && error == preError) {
+            return;
+        }
+
+        if(element != null) {
+            if(element instanceof TimelineMission) {
+                //event
+            } else {
+                //event
+            }
+        } else {
+            //TimelineEvent
+        }
+
+        preEvent = event;
+        preElement = element;
+        preError = error;
+    }
+
+    private WaypointMission initWaypointMission() {
+        WaypointMission.Builder waypointMissionBuilder = new WaypointMission.Builder().autoFlightSpeed(5f)
+                .maxFlightSpeed(10f)
+                .setExitMissionOnRCSignalLostEnabled(false)
+                .finishedAction(WaypointMissionFinishedAction.NO_ACTION)
+                .flightPathMode(WaypointMissionFlightPathMode.NORMAL)
+                .gotoFirstWaypointMode(WaypointMissionGotoWaypointMode.SAFELY)
+                .headingMode(WaypointMissionHeadingMode.AUTO)
+                .repeatTimes(1);
+
+        List<Waypoint> waypoints = new LinkedList<>();
+
+        //create Waypoints
+        //Waypoint waypoint = new Waypoint(...);
+        //add Action when Waypoint is reached
+        //waypoint.addAction(new WaypointAction(...));
+
+        //add waypoint to waypoints
+        //seems deprecated, maybe add Waypoints via waypointMissionBuilder.addWaypoint(waypoint)....;
+
+        waypointMissionBuilder.waypointList(waypoints).waypointCount(waypoints.size());
+        return waypointMissionBuilder.build();
+    }
+
+    private void startTimeline() {
+        if(MissionControl.getInstance().scheduledCount() > 0) {
+            MissionControl.getInstance().startTimeline();
+        } else {
+            //Timeline not initialized yet
+        }
+    }
+
+    private void stopTimeline() {
+        MissionControl.getInstance().stopTimeline();
+    }
+
+    private void pauseTimeline() {
+        MissionControl.getInstance().pauseTimeline();
+    }
+
+    private void resumeTimeline() {
+        MissionControl.getInstance().resumeTimeline();
+    }
+
+    private void cleanTimelineDataAndLog() {
+        if(missionControl.scheduledCount() > 0) {
+            missionControl.unscheduleEverything();
+            missionControl.removeAllListeners();
+        }
+        //Logout.setText("");
     }
 
     private void updateTimelineStatus(TimelineElement timelineElement, TimelineEvent timelineEvent, DJIError djiError) {
