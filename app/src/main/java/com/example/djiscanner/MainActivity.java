@@ -8,14 +8,12 @@ import android.util.Log;
 import android.view.TextureView;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.TextureView.SurfaceTextureListener;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
@@ -27,12 +25,16 @@ import dji.common.camera.SystemState;
 import dji.common.error.DJIError;
 import dji.common.gimbal.Attitude;
 import dji.common.gimbal.Rotation;
+import dji.common.mission.hotpoint.HotpointHeading;
+import dji.common.mission.hotpoint.HotpointMission;
+import dji.common.mission.hotpoint.HotpointStartPoint;
 import dji.common.mission.waypoint.Waypoint;
 import dji.common.mission.waypoint.WaypointMission;
 import dji.common.mission.waypoint.WaypointMissionFinishedAction;
 import dji.common.mission.waypoint.WaypointMissionFlightPathMode;
 import dji.common.mission.waypoint.WaypointMissionGotoWaypointMode;
 import dji.common.mission.waypoint.WaypointMissionHeadingMode;
+import dji.common.model.LocationCoordinate2D;
 import dji.common.product.Model;
 import dji.common.useraccount.UserAccountState;
 import dji.common.util.CommonCallbacks;
@@ -41,16 +43,24 @@ import dji.sdk.base.BaseProduct;
 import dji.sdk.camera.Camera;
 import dji.sdk.camera.VideoFeeder;
 import dji.sdk.codec.DJICodecManager;
+import dji.sdk.media.MediaManager;
 import dji.sdk.mission.MissionControl;
 import dji.sdk.mission.Triggerable;
 import dji.sdk.mission.timeline.TimelineElement;
 import dji.sdk.mission.timeline.TimelineEvent;
 import dji.sdk.mission.timeline.TimelineMission;
 import dji.sdk.mission.timeline.actions.GimbalAttitudeAction;
+import dji.sdk.mission.timeline.actions.GoHomeAction;
+import dji.sdk.mission.timeline.actions.HotpointAction;
 import dji.sdk.mission.timeline.actions.ShootPhotoAction;
+import dji.sdk.mission.timeline.actions.TakeOffAction;
+import dji.sdk.mission.timeline.triggers.AircraftLandedTrigger;
 import dji.sdk.mission.timeline.triggers.BatteryPowerLevelTrigger;
 import dji.sdk.mission.timeline.triggers.Trigger;
 import dji.sdk.mission.timeline.triggers.TriggerEvent;
+import dji.sdk.mission.timeline.triggers.WaypointReachedTrigger;
+import dji.sdk.mission.waypoint.WaypointMissionOperator;
+import dji.sdk.mission.waypoint.WaypointMissionOperatorListener;
 import dji.sdk.products.Aircraft;
 import dji.sdk.remotecontroller.RemoteController;
 import dji.sdk.useraccount.UserAccountManager;
@@ -65,22 +75,21 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     protected VideoFeeder.VideoDataListener mReceivedVideoDataListener = null;
     protected DJICodecManager mCodecManager = null;
 
+    private TextView output;
+
+    protected double homeLatitude = 181;
+    protected double homeLongitude = 181;
+
+    //WaypointMission
     private MissionControl missionControl;
     private FlightController flightController;
     private TimelineEvent preEvent;
     private TimelineElement preElement;
     private DJIError preError;
 
-    private Trigger.Listener triggerListener = new Trigger.Listener() {
-        @Override
-        public void onEvent(Trigger trigger, TriggerEvent event, @Nullable DJIError djiError) {
-            //things that happen when a trigger occures
-        }
-    };
-
     protected TextureView mVideoSurface = null;
-    private Button mCaptureBtn, mShootPhotoModeBtn, mRecordVideoModeBtn;
-    private ToggleButton mRecordBtn;
+    private Button mButtonStart, mButtonCapture;
+    private Button mButtonInit, mDownload;
     private TextView recordingTime;
 
     private Handler handler;
@@ -88,10 +97,10 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
         initUI();
 
         baseProduct = DJIScannerApplication.getProductInstance();
-        setContentView(R.layout.activity_main);
         handler = new Handler();
 
         //Flight and Mission Controller
@@ -115,53 +124,13 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
             }
         };
 
-        //Camera
-        Camera camera = DJIScannerApplication.getCameraInstance();
-        if (camera != null) {
-
-            camera.setSystemStateCallback(new SystemState.Callback() {
-                @Override
-                public void onUpdate(SystemState cameraSystemState) {
-                    if (null != cameraSystemState) {
-
-                        int recordTime = cameraSystemState.getCurrentVideoRecordingTimeInSeconds();
-                        int minutes = (recordTime % 3600) / 60;
-                        int seconds = recordTime % 60;
-
-                        final String timeString = String.format("%02d:%02d", minutes, seconds);
-                        final boolean isVideoRecording = cameraSystemState.isRecording();
-
-                        MainActivity.this.runOnUiThread(new Runnable() {
-
-                            @Override
-                            public void run() {
-
-                                recordingTime.setText(timeString);
-
-                                /*
-                                 * Update recordingTime TextView visibility and mRecordBtn's check state
-                                 */
-                                if (isVideoRecording){
-                                    recordingTime.setVisibility(View.VISIBLE);
-                                }else
-                                {
-                                    recordingTime.setVisibility(View.INVISIBLE);
-                                }
-                            }
-                        });
-                    }
-                }
-            });
-
-        }
-
         //Remote Controller
         if ((null != DJIScannerApplication.getProductInstance())
                 && (DJIScannerApplication.getProductInstance() instanceof Aircraft)
                 && (null != DJIScannerApplication.getAircraftInstance().getRemoteController())) {
             remoteController = ((Aircraft) DJIScannerApplication.getProductInstance()).getRemoteController();
             if(remoteController.isCustomizableButtonSupported()) {
-                setupCustomizableButtons();
+
             }
         }
 
@@ -174,7 +143,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
     protected void onProductChange() {
         initPreviewer();
-        loginAccount();
+        //loginAccount();
     }
 
     private void loginAccount(){
@@ -232,35 +201,25 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
     private void initUI() {
         // init mVideoSurface
-        mVideoSurface = (TextureView)findViewById(R.id.video_previewer_surface);
+        mVideoSurface = findViewById(R.id.video_previewer_surface);
+        output = this.findViewById(R.id.output);
+        output.setText("");
 
-        recordingTime = (TextView) findViewById(R.id.timer);
-        mCaptureBtn = (Button) findViewById(R.id.btn_capture);
-        mRecordBtn = (ToggleButton) findViewById(R.id.btn_record);
-        mShootPhotoModeBtn = (Button) findViewById(R.id.btn_shoot_photo_mode);
-        mRecordVideoModeBtn = (Button) findViewById(R.id.btn_record_video_mode);
+        recordingTime = findViewById(R.id.timer);
+        mButtonInit = findViewById(R.id.initTimeline);
+        mButtonStart = findViewById(R.id.startMission);
+        mDownload = findViewById(R.id.mDownload);
 
         if (null != mVideoSurface) {
             mVideoSurface.setSurfaceTextureListener(this);
         }
 
-        mCaptureBtn.setOnClickListener(this);
-        mRecordBtn.setOnClickListener(this);
-        mShootPhotoModeBtn.setOnClickListener(this);
-        mRecordVideoModeBtn.setOnClickListener(this);
+        mButtonCapture.setOnClickListener(this);
+        mButtonInit.setOnClickListener(this);
+        mButtonStart.setOnClickListener(this);
+        mDownload.setOnClickListener(this);
 
         recordingTime.setVisibility(View.INVISIBLE);
-
-        mRecordBtn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    startRecord();
-                } else {
-                    stopRecord();
-                }
-            }
-        });
     }
 
     private void initPreviewer() {
@@ -275,6 +234,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
             }
             if (!product.getModel().equals(Model.UNKNOWN_AIRCRAFT)) {
                 VideoFeeder.getInstance().getPrimaryVideoFeed().addVideoDataListener(mReceivedVideoDataListener);
+                //VideoFeeder.getInstance().getSecondaryVideoFeed().addVideoDataListener(mReceivedVideoDataListener);
             }
         }
     }
@@ -327,16 +287,21 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     public void onClick(View v) {
 
         switch (v.getId()) {
-            case R.id.btn_capture:{
+            case R.id.initTimeline: {
+                //initTimeline();
+                break;
+            }
+            case R.id.startMission: {
+                //startTimeline();
+                int i = 0;
+                break;
+            }
+            case R.id.buttonCapture: {
                 captureAction();
                 break;
             }
-            case R.id.btn_shoot_photo_mode:{
-                switchCameraMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO);
-                break;
-            }
-            case R.id.btn_record_video_mode:{
-                switchCameraMode(SettingsDefinitions.CameraMode.RECORD_VIDEO);
+            case R.id.mDownload: {
+                downloadImage();
                 break;
             }
             default:
@@ -344,18 +309,16 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         }
     }
 
-    //Camera Methods
-
-    private void switchCameraMode(SettingsDefinitions.CameraMode cameraMode){
-
+    private void downloadImage() {
         Camera camera = DJIScannerApplication.getCameraInstance();
         if (camera != null) {
-            camera.setMode(cameraMode, new CommonCallbacks.CompletionCallback() {
+            camera.setMode(SettingsDefinitions.CameraMode.MEDIA_DOWNLOAD, new CommonCallbacks.CompletionCallback() {
                 @Override
                 public void onResult(DJIError error) {
 
                     if (error == null) {
                         showToast("Switch Camera Mode Succeeded");
+                        //getImages
                     } else {
                         showToast(error.getDescription());
                     }
@@ -396,49 +359,9 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         }
     }
 
-    // Method for starting recording
-    private void startRecord(){
-
-        final Camera camera = DJIScannerApplication.getCameraInstance();
-        if (camera != null) {
-            camera.startRecordVideo(new CommonCallbacks.CompletionCallback(){
-                @Override
-                public void onResult(DJIError djiError)
-                {
-                    if (djiError == null) {
-                        showToast("Record video: success");
-                    }else {
-                        showToast(djiError.getDescription());
-                    }
-                }
-            }); // Execute the startRecordVideo API
-        }
-    }
-
-    // Method for stopping recording
-    private void stopRecord(){
-
-        Camera camera = DJIScannerApplication.getCameraInstance();
-        if (camera != null) {
-            camera.stopRecordVideo(new CommonCallbacks.CompletionCallback(){
-
-                @Override
-                public void onResult(DJIError djiError)
-                {
-                    if(djiError == null) {
-                        showToast("Stop recording: success");
-                    } else {
-                        showToast(djiError.getDescription());
-                    }
-                }
-            }); // Execute the stopRecordVideo API
-        }
-
-    }
-
     //TimelineMissionControl
 
-    private void initTimeline() {
+    /*private void initTimeline() {
 
         List<TimelineElement> elements = new ArrayList<>();
 
@@ -452,6 +375,9 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         };
 
         //Mission example steps:
+        //takeoff
+        elements.add(new TakeOffAction());
+
         //reset the gimbal to horizontal angle in 2 seconds
         Attitude attitude = new Attitude(-30, Rotation.NO_ROTATION, Rotation.NO_ROTATION);
         GimbalAttitudeAction gimbalAction = new GimbalAttitudeAction(attitude);
@@ -461,9 +387,34 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         //take a single photo
         elements.add(ShootPhotoAction.newShootSinglePhotoAction());
 
+        //hotpointmission
+        HotpointMission hotpointMission = new HotpointMission();
+        hotpointMission.setHotpoint(new LocationCoordinate2D(homeLatitude, homeLongitude));
+        hotpointMission.setAltitude(10);
+        hotpointMission.setRadius(10);
+        hotpointMission.setAngularVelocity(10);
+        HotpointStartPoint startPoint = HotpointStartPoint.NEAREST;
+        hotpointMission.setStartPoint(startPoint);
+        HotpointHeading heading = HotpointHeading.TOWARDS_HOT_POINT;
+        hotpointMission.setHeading(heading);
+        elements.add(new HotpointAction(hotpointMission, 360));
+
+        //take a single photo
+        elements.add(ShootPhotoAction.newShootSinglePhotoAction());
+
+        //go home
+        elements.add(new GoHomeAction());
+
         //Missions e.g. Waypoint Missions are also addable to the elements ArrayList
 
         addBatteryPowerLevelTrigger(missionControl);
+
+        if( missionControl.scheduledCount() > 0) {
+            missionControl.unscheduleEverything();
+        }
+
+        missionControl.scheduleElements(elements);
+        output.setText(R.string.TimelineInit);
     }
 
     private void updateTimlineStatus(@Nullable TimelineElement element, TimelineEvent event, DJIError error) {
@@ -542,11 +493,30 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     private void updateTimelineStatus(TimelineElement timelineElement, TimelineEvent timelineEvent, DJIError djiError) {
     }
 
+    private Trigger.Listener triggerListener = new Trigger.Listener() {
+        @Override
+        public void onEvent(Trigger trigger, TriggerEvent event, @Nullable DJIError djiError) {
+            output.append("Trigger: event is " + event.name() + (djiError == null ? " " : djiError.getDescription()));
+        }
+    };
+
     private void addBatteryPowerLevelTrigger(Triggerable triggerTarget) {
         float value = 20.0f;
         BatteryPowerLevelTrigger trigger = new BatteryPowerLevelTrigger();
         trigger.setPowerPercentageTriggerValue(value);
         addTrigger(trigger, triggerTarget, " at level " + value);
+    }
+
+    private void addWaypointReachedTrigger(Triggerable triggerTarget) {
+        int value = 1;
+        WaypointReachedTrigger trigger = new WaypointReachedTrigger();
+        trigger.setWaypointIndex(value);
+        addTrigger(trigger, triggerTarget, " at index " + value);
+    }
+
+    private void addAircraftLandedTrigger(Triggerable triggerTarget) {
+        AircraftLandedTrigger trigger = new AircraftLandedTrigger();
+        addTrigger(trigger, triggerTarget, "");
     }
 
     private void addTrigger(Trigger trigger, Triggerable triggerTarget, String additionalComment) {
@@ -569,7 +539,8 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         trigger.setAction(new Trigger.Action() {
             @Override
             public void onCall() {
+                Log.i("initTrigger", "Trigger " + trigger.toString() + " onCall()");
             }
         });
-    }
+    }*/
 }
