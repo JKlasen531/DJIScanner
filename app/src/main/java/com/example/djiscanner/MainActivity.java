@@ -104,36 +104,30 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         handler = new Handler();
 
         //Flight and Mission Controller
-        if(baseProduct == null || baseProduct.isConnected()) {
+        if(baseProduct == null || !baseProduct.isConnected()) {
             missionControl = null;
         } else {
-            missionControl =    MissionControl.getInstance();
+            missionControl = MissionControl.getInstance();
             if(DJIScannerApplication.isAircraftConnected()) {
                 flightController = ((Aircraft) baseProduct).getFlightController();
             }
         }
 
         // The callback for receiving the raw H264 video data for camera live view
-        mReceivedVideoDataListener = new VideoFeeder.VideoDataListener() {
-
-            @Override
-            public void onReceive(byte[] videoBuffer, int size) {
-                if (mCodecManager != null) {
-                    mCodecManager.sendDataToDecoder(videoBuffer, size);
-                }
+        mReceivedVideoDataListener = (videoBuffer, size) -> {
+            if (mCodecManager != null) {
+                mCodecManager.sendDataToDecoder(videoBuffer, size);
             }
         };
 
         //Remote Controller
-        if ((null != DJIScannerApplication.getProductInstance())
+        /*if ((null != DJIScannerApplication.getProductInstance())
                 && (DJIScannerApplication.getProductInstance() instanceof Aircraft)
                 && (null != DJIScannerApplication.getAircraftInstance().getRemoteController())) {
             remoteController = ((Aircraft) DJIScannerApplication.getProductInstance()).getRemoteController();
             if(remoteController.isCustomizableButtonSupported()) {
-
             }
-        }
-
+        }*/
     }
 
     //RemoteControl
@@ -361,7 +355,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
     //TimelineMissionControl
 
-    /*private void initTimeline() {
+    private void initTimeline() {
 
         List<TimelineElement> elements = new ArrayList<>();
 
@@ -542,5 +536,5 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                 Log.i("initTrigger", "Trigger " + trigger.toString() + " onCall()");
             }
         });
-    }*/
+    }
 }

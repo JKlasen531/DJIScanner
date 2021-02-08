@@ -196,7 +196,7 @@
         android:background="@color/transparent"
         android:gravity="center"
         android:visibility="invisible"
-        tools:ignore="RtlHardcoded"/>
+        tools:ignore="RtlHardcoded" />
 
     <!-- Pre-flight checklist panel -->
     <dji.ux.panel.PreFlightCheckListPanel
