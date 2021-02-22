@@ -29,7 +29,6 @@ public class DJIScannerApplication extends Application{
     private DJISDKManager.SDKManagerCallback mDJISDKManagerCallback;
     private static BaseProduct mProduct;
     public Handler mHandler;
-
     private Application instance;
 
     public void setContext(Application application) {
@@ -42,7 +41,6 @@ public class DJIScannerApplication extends Application{
     }
 
     public DJIScannerApplication() {
-
     }
 
     /**
@@ -54,10 +52,6 @@ public class DJIScannerApplication extends Application{
             mProduct = DJISDKManager.getInstance().getProduct();
         }
         return mProduct;
-    }
-
-    public static boolean isAircraftConnected() {
-        return getProductInstance() != null && getProductInstance() instanceof Aircraft;
     }
 
     public static synchronized Aircraft getAircraftInstance() {
@@ -81,6 +75,28 @@ public class DJIScannerApplication extends Application{
         }
 
         return camera;
+    }
+
+    public static boolean isAircraftConnected() {
+        return getProductInstance() != null && getProductInstance() instanceof Aircraft;
+    }
+
+    public static boolean isHandHeldConnected() {
+        return getProductInstance() != null && getProductInstance() instanceof HandHeld;
+    }
+
+    public static boolean isProductModuleAvailable() {
+        return (null != DJIScannerApplication.getProductInstance());
+    }
+
+    public static boolean isCameraModuleAvailable() {
+        return isProductModuleAvailable() &&
+                (null != DJIScannerApplication.getProductInstance().getCamera());
+    }
+
+    public static boolean isPlaybackAvailable() {
+        return isCameraModuleAvailable() &&
+                (null != DJIScannerApplication.getProductInstance().getCamera().getPlaybackManager());
     }
 
     @Override
@@ -131,7 +147,6 @@ public class DJIScannerApplication extends Application{
             public void onProductConnect(BaseProduct baseProduct) {
                 Log.d("TAG", String.format("onProductConnect newProduct:%s", baseProduct));
                 notifyStatusChange();
-
             }
 
             @Override

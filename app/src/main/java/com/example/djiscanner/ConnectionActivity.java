@@ -10,6 +10,8 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.text.method.KeyListener;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -26,12 +28,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
+import dji.common.useraccount.UserAccountState;
+import dji.common.util.CommonCallbacks;
+import dji.keysdk.DJIKey;
+import dji.keysdk.KeyManager;
+import dji.keysdk.ProductKey;
 import dji.log.DJILog;
 import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
 import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
+import dji.sdk.useraccount.UserAccountManager;
 
 public class ConnectionActivity extends Activity implements View.OnClickListener {
 
@@ -39,7 +47,9 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
     private TextView mTextConnectionStatus;
     private TextView mTextProduct;
+    private TextView mTextModelAvailable;
     private TextView mVersionTv;
+
     private Button mBtnOpen;
     private static final String[] REQUIRED_PERMISSION_LIST = new String[]{
             Manifest.permission.VIBRATE,
@@ -59,6 +69,9 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     private List<String> missingPermission = new ArrayList<>();
     private AtomicBoolean isRegistrationInProgress = new AtomicBoolean(false);
     private static final int REQUEST_PERMISSION_CODE = 12345;
+    private DJIKey firmwareKey;
+    private KeyListener firmwareVersionUpdater;
+    private boolean hasStartedFirmVersionListener = false;
 
 
     @Override
@@ -66,7 +79,6 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         super.onCreate(savedInstanceState);
         checkAndRequestPermissions();
         setContentView(R.layout.activity_connection);
-
         initUI();
 
         // Register the broadcast receiver for receiving the device connection's changes.
@@ -116,7 +128,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         if (missingPermission.isEmpty()) {
             startSDKRegistration();
         } else {
-            showToast("Missing permissions!!!");
+            showToast("Missing permissions!");
         }
     }
 
@@ -215,18 +227,22 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     protected void onDestroy() {
         Log.e(TAG, "onDestroy");
         unregisterReceiver(mReceiver);
+        //removeFirmwareVersionListener();
         super.onDestroy();
     }
 
     private void initUI() {
 
         mTextConnectionStatus = (TextView) findViewById(R.id.text_connection_status);
+        mTextModelAvailable = findViewById(R.id.text_model_available);
         mTextProduct = (TextView) findViewById(R.id.text_product_info);
+
+        mVersionTv = (TextView) findViewById(R.id.textView2);
+        mVersionTv.setText(getResources().getString(R.string.sdk_version, DJISDKManager.getInstance().getSDKVersion()));
+
         mBtnOpen = (Button) findViewById(R.id.btn_open);
         mBtnOpen.setOnClickListener(this);
         mBtnOpen.setEnabled(false);
-        mVersionTv = (TextView) findViewById(R.id.textView2);
-        mVersionTv.setText(getResources().getString(R.string.sdk_version, DJISDKManager.getInstance().getSDKVersion()));
     }
 
     protected BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -254,6 +270,8 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                 mTextProduct.setText(R.string.product_information);
             }
 
+            //loginAccount();
+
         } else {
 
             Log.v(TAG, "refreshSDK: False");
@@ -262,6 +280,22 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             mTextProduct.setText(R.string.product_information);
             mTextConnectionStatus.setText(R.string.connection_loose);
         }
+    }
+
+    private void loginAccount(){
+        UserAccountManager.getInstance().logIntoDJIUserAccount(this,
+                new CommonCallbacks.CompletionCallbackWith<UserAccountState>() {
+                    @Override
+                    public void onSuccess(final UserAccountState userAccountState) {
+                        Log.e(TAG, "Login Success");
+                        showToast("Login Success!");
+                    }
+                    @Override
+                    public void onFailure(DJIError error) {
+                        showToast("Login Error:"
+                                + error.getDescription());
+                    }
+                });
     }
 
     @Override
@@ -287,4 +321,49 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             }
         });
     }
+
+    private void updateVersion() {
+        String version = null;
+        if (DJIScannerApplication.getProductInstance() != null) {
+            version = DJIScannerApplication.getProductInstance().getFirmwarePackageVersion();
+        }
+        if(TextUtils.isEmpty(version)) {
+            mTextModelAvailable.setText("Firmware version:N/A");
+        } else {
+            mTextModelAvailable.setText("Firmware version:"+version);
+            //removeFirmwareVersionListener();
+        }
+    }
+
+
+    //stuff to update firmware
+    /*private void tryUpdateFirmwareVersionWithListener() {
+        if (!hasStartedFirmVersionListener) {
+            firmwareVersionUpdater = new dji.keysdk.callback.KeyListener() {
+                @Override
+                public void onValueChange(final Object o, final Object o1) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            updateVersion();
+                        }
+                    });
+                }
+            };
+            firmwareKey = ProductKey.create(ProductKey.FIRMWARE_PACKAGE_VERSION);
+            if (KeyManager.getInstance() != null) {
+                KeyManager.getInstance().addListener(firmwareKey, firmwareVersionUpdater );
+            }
+            hasStartedFirmVersionListener = true;
+        }
+        updateVersion();
+    }
+    private void removeFirmwareVersionListener() {
+        if (hasStartedFirmVersionListener) {
+            if (KeyManager.getInstance() != null) {
+                KeyManager.getInstance().removeListener(firmwareVersionUpdater);
+            }
+        }
+        hasStartedFirmVersionListener = false;
+    }*/
 }

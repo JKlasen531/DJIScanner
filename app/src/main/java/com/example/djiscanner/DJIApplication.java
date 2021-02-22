@@ -21,6 +21,8 @@ import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
 import dji.sdk.useraccount.UserAccountManager;
 
+
+//should be removable
 public class DJIApplication extends Application {
 
     public static final String FLAG_CONNECTION_CHANGE = "uxsdk_demo_connection_change";

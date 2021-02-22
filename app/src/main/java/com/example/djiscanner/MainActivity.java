@@ -97,7 +97,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        //setContentView(R.layout.activity_main);
         initUI();
 
         baseProduct = DJIScannerApplication.getProductInstance();
@@ -195,14 +195,14 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
     private void initUI() {
         // init mVideoSurface
-        mVideoSurface = findViewById(R.id.video_previewer_surface);
+        /*mVideoSurface = findViewById(R.id.video_previewer_surface);
         output = this.findViewById(R.id.output);
         output.setText("");
 
         recordingTime = findViewById(R.id.timer);
         mButtonInit = findViewById(R.id.initTimeline);
         mButtonStart = findViewById(R.id.startMission);
-        mDownload = findViewById(R.id.mDownload);
+        mDownload = findViewById(R.id.mDownload);*/
 
         if (null != mVideoSurface) {
             mVideoSurface.setSurfaceTextureListener(this);
@@ -280,7 +280,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     @Override
     public void onClick(View v) {
 
-        switch (v.getId()) {
+        /*switch (v.getId()) {
             case R.id.initTimeline: {
                 //initTimeline();
                 break;
@@ -300,7 +300,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
             }
             default:
                 break;
-        }
+        }*/
     }
 
     private void downloadImage() {

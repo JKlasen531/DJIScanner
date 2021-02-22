@@ -28,10 +28,19 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+        debug {
+            shrinkResources true
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    dexOptions {
+        javaMaxHeapSize "4g"
     }
 
     packagingOptions{
@@ -47,10 +56,10 @@ android {
         doNotStrip "*/*/libDJIFlySafeCore.so"
         doNotStrip "*/*/libdjifs_jni.so"
         doNotStrip "*/*/libsfjni.so"
-        //doNotStrip "*/*/libDJICommonJNI.so"
-        //doNotStrip "*/*/libDJICSDKCommon.so"
-        //doNotStrip "*/*/libDJIUpgradeCore.so"
-        //doNotStrip "*/*/libDJIUpgradeJNI.so"
+        doNotStrip "*/*/libDJICommonJNI.so"
+        doNotStrip "*/*/libDJICSDKCommon.so"
+        doNotStrip "*/*/libDJIUpgradeCore.so"
+        doNotStrip "*/*/libDJIUpgradeJNI.so"
         exclude 'META-INF/rxjava.properties'
     }
 }
@@ -59,22 +68,32 @@ dependencies {
 
     implementation 'androidx.multidex:multidex:2.0.1'
     implementation 'com.squareup:otto:1.3.8'
+    implementation('com.dji:dji-sdk:4.13', {
+        /**
+         * Uncomment the "library-anti-distortion" if your app does not need Anti Distortion for Mavic 2 Pro and Mavic 2 Zoom.
+         * Uncomment the "fly-safe-database" if you need database for release, or we will download it when DJISDKManager.getInstance().registerApp
+         * is called.
+         * Both will greatly reducing the size of the APK.
+         */
+        exclude module:'library-anti-distortion'
+        //exclude module: 'fly-safe-database'
+    })
+    compileOnly 'com.dji:dji-sdk-provided:4.13.1'
+    implementation 'com.dji:dji-uxsdk:4.13'
+
     implementation 'androidx.appcompat:appcompat:1.2.0'
-    implementation 'com.google.android.material:material:1.2.1'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
     implementation 'androidx.core:core:1.3.2'
+    implementation 'com.google.android.material:material:1.3.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
     implementation 'androidx.annotation:annotation:1.1.0'
 
-    /*implementation('com.dji:dji-sdk:4.13', {
-        exclude module: 'library-anti-distortion'
-        exclude module: 'fly-safe-database'
-    })*/
-    compileOnly 'com.dji:dji-sdk-provided:4.13.1'
-    implementation 'com.dji:dji-uxsdk:4.13'
 
     testImplementation 'junit:junit:4.13.1'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 }
+
+//apply from : "https://terra-1-g.djicdn.com/71a7d383e71a4fb8887a310eb746b47f/msdk/Android-CommonConfig/config_sample_all.gradle"
+//apply from : "https://terra-1-g.djicdn.com/71a7d383e71a4fb8887a310eb746b47f/msdk/Android-CommonConfig/config_sample_dependencies_uxsdk.gradle"
