@@ -190,7 +190,7 @@
     <!-- Pre-flight checklist panel -->
 
     <Button
-        android:id="@+id/startMission"
+        android:id="@+id/btn_startMission"
         android:layout_width="38dp"
         android:layout_height="30dp"
         android:layout_below="@id/CameraCapturePanel"
@@ -202,7 +202,7 @@
         android:id="@+id/btn_mediaManager"
         android:layout_width="38dp"
         android:layout_height="30dp"
-        android:layout_below="@id/startMission"
+        android:layout_below="@id/btn_startMission"
         android:layout_alignStart="@+id/CameraCapturePanel"
         android:background="@drawable/playback"
         android:visibility="visible" />

@@ -303,7 +303,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         switch (v.getId()) {
 
             case R.id.btn_open: {
-                Intent intent = new Intent(this, MainActivity.class);
+                Intent intent = new Intent(this, DefaultLayoutActivity.class);
                 startActivity(intent);
                 break;
             }
@@ -322,7 +322,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         });
     }
 
-    private void updateVersion() {
+    /*private void updateVersion() {
         String version = null;
         if (DJIScannerApplication.getProductInstance() != null) {
             version = DJIScannerApplication.getProductInstance().getFirmwarePackageVersion();
@@ -333,7 +333,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             mTextModelAvailable.setText("Firmware version:"+version);
             //removeFirmwareVersionListener();
         }
-    }
+    }*/
 
 
     //stuff to update firmware
