@@ -25,7 +25,7 @@ import dji.sdk.sdkmanager.DJISDKManager;
 
 public class DJIScannerApplication extends Application{
 
-    public static final String FLAG_CONNECTION_CHANGE = "fpv_tutorial_connection_change";
+    public static final String FLAG_CONNECTION_CHANGE = "dji_app_connection_change";
 
     private DJISDKManager.SDKManagerCallback mDJISDKManagerCallback;
     private static BaseProduct mProduct;
@@ -55,51 +55,6 @@ public class DJIScannerApplication extends Application{
         return mProduct;
     }
 
-    public static synchronized Aircraft getAircraftInstance() {
-        if (!isAircraftConnected()) {
-            return null;
-        }
-        return (Aircraft) getProductInstance();
-    }
-
-    public static synchronized Camera getCameraInstance() {
-
-        if (getProductInstance() == null) return null;
-
-        Camera camera = null;
-
-        if (getProductInstance() instanceof Aircraft){
-            camera = ((Aircraft) getProductInstance()).getCamera();
-
-        } else if (getProductInstance() instanceof HandHeld) {
-            camera = ((HandHeld) getProductInstance()).getCamera();
-        }
-
-        return camera;
-    }
-
-    public static boolean isAircraftConnected() {
-        return getProductInstance() != null && getProductInstance() instanceof Aircraft;
-    }
-
-    public static boolean isHandHeldConnected() {
-        return getProductInstance() != null && getProductInstance() instanceof HandHeld;
-    }
-
-    public static boolean isProductModuleAvailable() {
-        return (null != DJIScannerApplication.getProductInstance());
-    }
-
-    public static boolean isCameraModuleAvailable() {
-        return isProductModuleAvailable() &&
-                (null != DJIScannerApplication.getProductInstance().getCamera());
-    }
-
-    public static boolean isPlaybackAvailable() {
-        return isCameraModuleAvailable() &&
-                (null != DJIScannerApplication.getProductInstance().getCamera().getPlaybackManager());
-    }
-
     @Override
     public void onCreate() {
         super.onCreate();
@@ -123,7 +78,7 @@ public class DJIScannerApplication extends Application{
                         }
                     });
                     DJISDKManager.getInstance().startConnectionToProduct();
-
+                    //DJISDKManager.getInstance().enableBridgeModeWithBridgeAppIP("172.16.35.172");
                 } else {
 
                     Handler handler = new Handler(Looper.getMainLooper());
@@ -187,8 +142,10 @@ public class DJIScannerApplication extends Application{
 
             }
 
+
+
         };
-        //Check the permissions before registering the application for android system 6.0 above.
+
         int permissionCheck = ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
         int permissionCheck2 = ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.READ_PHONE_STATE);
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || (permissionCheck == 0 && permissionCheck2 == 0)) {
@@ -199,7 +156,53 @@ public class DJIScannerApplication extends Application{
         } else {
             Toast.makeText(getApplicationContext(), "Please check if the permission is granted.", Toast.LENGTH_LONG).show();
         }
+        //Check the permissions before registering the application for android system 6.0 above
     }
+
+    /*public static synchronized Aircraft getAircraftInstance() {
+        if (!isAircraftConnected()) {
+            return null;
+        }
+        return (Aircraft) getProductInstance();
+    }
+
+    public static synchronized Camera getCameraInstance() {
+
+        if (getProductInstance() == null) return null;
+
+        Camera camera = null;
+
+        if (getProductInstance() instanceof Aircraft){
+            camera = ((Aircraft) getProductInstance()).getCamera();
+
+        } else if (getProductInstance() instanceof HandHeld) {
+            camera = ((HandHeld) getProductInstance()).getCamera();
+        }
+
+        return camera;
+    }
+
+    public static boolean isAircraftConnected() {
+        return getProductInstance() != null && getProductInstance() instanceof Aircraft;
+    }
+
+    public static boolean isHandHeldConnected() {
+        return getProductInstance() != null && getProductInstance() instanceof HandHeld;
+    }
+
+    public static boolean isProductModuleAvailable() {
+        return (null != DJIScannerApplication.getProductInstance());
+    }
+
+    public static boolean isCameraModuleAvailable() {
+        return isProductModuleAvailable() &&
+                (null != DJIScannerApplication.getProductInstance().getCamera());
+    }
+
+    public static boolean isPlaybackAvailable() {
+        return isCameraModuleAvailable() &&
+                (null != DJIScannerApplication.getProductInstance().getCamera().getPlaybackManager());
+    }*/
 
     private void notifyStatusChange() {
         mHandler.removeCallbacks(updateRunnable);

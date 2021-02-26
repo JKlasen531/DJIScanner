@@ -145,6 +145,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                                 DJILog.e("App registration", DJISDKError.REGISTRATION_SUCCESS.getDescription());
                                 DJISDKManager.getInstance().startConnectionToProduct();
                                 showToast("Register Success");
+                                //DJISDKManager.getInstance().enableBridgeModeWithBridgeAppIP("172.16.35.172");
                             } else {
                                 showToast( "Register sdk fails, check network is available");
                             }
@@ -303,6 +304,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         switch (v.getId()) {
 
             case R.id.btn_open: {
+                Log.i("OnClick","Connection Activity, starting DefaultLayoutActivity");
                 Intent intent = new Intent(this, DefaultLayoutActivity.class);
                 startActivity(intent);
                 break;

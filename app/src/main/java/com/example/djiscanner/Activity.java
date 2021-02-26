@@ -1,6 +1,5 @@
 package com.example.djiscanner;
 
-import android.app.Activity;
 import android.graphics.SurfaceTexture;
 import android.os.Bundle;
 import android.os.Handler;
@@ -9,10 +8,8 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ToggleButton;
 
 import androidx.annotation.Nullable;
 
@@ -21,7 +18,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import dji.common.camera.SettingsDefinitions;
-import dji.common.camera.SystemState;
 import dji.common.error.DJIError;
 import dji.common.gimbal.Attitude;
 import dji.common.gimbal.Rotation;
@@ -43,7 +39,6 @@ import dji.sdk.base.BaseProduct;
 import dji.sdk.camera.Camera;
 import dji.sdk.camera.VideoFeeder;
 import dji.sdk.codec.DJICodecManager;
-import dji.sdk.media.MediaManager;
 import dji.sdk.mission.MissionControl;
 import dji.sdk.mission.Triggerable;
 import dji.sdk.mission.timeline.TimelineElement;
@@ -59,15 +54,14 @@ import dji.sdk.mission.timeline.triggers.BatteryPowerLevelTrigger;
 import dji.sdk.mission.timeline.triggers.Trigger;
 import dji.sdk.mission.timeline.triggers.TriggerEvent;
 import dji.sdk.mission.timeline.triggers.WaypointReachedTrigger;
-import dji.sdk.mission.waypoint.WaypointMissionOperator;
-import dji.sdk.mission.waypoint.WaypointMissionOperatorListener;
 import dji.sdk.products.Aircraft;
 import dji.sdk.remotecontroller.RemoteController;
 import dji.sdk.useraccount.UserAccountManager;
 
-public class MainActivity extends Activity implements TextureView.SurfaceTextureListener, OnClickListener{
+public class Activity {
 
-    private static final String TAG = MainActivity.class.getName();
+
+    /*private static final String TAG = Activity.class.getName();
     private RemoteController remoteController;
     private BaseProduct baseProduct;
 
@@ -132,7 +126,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
     //RemoteControl
 
-    private void setupCustomizableButtons() {
+    /*private void setupCustomizableButtons() {
     }
 
     protected void onProductChange() {
@@ -204,7 +198,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         mButtonStart = findViewById(R.id.startMission);
         mDownload = findViewById(R.id.mDownload);*/
 
-        if (null != mVideoSurface) {
+        /*if (null != mVideoSurface) {
             mVideoSurface.setSurfaceTextureListener(this);
         }
 
@@ -272,7 +266,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     public void showToast(final String msg) {
         runOnUiThread(new Runnable() {
             public void run() {
-                Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
+                Toast.makeText(Activity.this, msg, Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -301,7 +295,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
             default:
                 break;
         }*/
-    }
+    /*}
 
     private void downloadImage() {
         Camera camera = DJIScannerApplication.getCameraInstance();
@@ -537,4 +531,4 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
             }
         });
     }
-}
+}*/

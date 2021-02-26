@@ -1,6 +1,5 @@
 package com.example.djiscanner;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
@@ -18,7 +17,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.OrientationHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.io.File;
@@ -30,21 +28,21 @@ import java.util.List;
 import dji.common.camera.SettingsDefinitions;
 import dji.common.error.DJICameraError;
 import dji.common.error.DJIError;
-import dji.common.product.Model;
 import dji.common.util.CommonCallbacks;
 import dji.log.DJILog;
-import dji.sdk.base.BaseProduct;
 import dji.sdk.media.DownloadListener;
 import dji.sdk.media.FetchMediaTask;
 import dji.sdk.media.FetchMediaTaskContent;
 import dji.sdk.media.FetchMediaTaskScheduler;
 import dji.sdk.media.MediaFile;
 import dji.sdk.media.MediaManager;
-import dji.sdk.sdkmanager.DJISDKManager;
 
-public class MediaManagerActivity extends Activity implements View.OnClickListener{
+public class MediaManagerActivity {
 
-    private static final String TAG = MainActivity.class.getName();
+}/*extends android.app.Activity implements View.OnClickListener{
+
+
+    private static final String TAG = Activity.class.getName();
 
     private Button mBackBtn, mDeleteBtn, mReloadBtn, mDownloadBtn, mStatusBtn;
     private Button mPlayBtn, mResumeBtn, mPauseBtn, mStopBtn, mMoveToBtn;
@@ -571,10 +569,10 @@ public class MediaManagerActivity extends Activity implements View.OnClickListen
                 }
             }
 
-            /*@Override
+            @Override
             public void onRealtimeDataUpdate(byte[] bytes, long l, boolean b) {
 
-            }*/
+            }
 
             @Override
             public void onStart() {
@@ -751,5 +749,5 @@ public class MediaManagerActivity extends Activity implements View.OnClickListen
         }
     }
 
-}
+}*/
 
