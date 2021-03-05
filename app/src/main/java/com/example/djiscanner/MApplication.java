@@ -8,7 +8,6 @@ import com.secneo.sdk.Helper;
 public class MApplication extends Application {
 
     private DJIScannerApplication djiScannerApplication;
-    private DJIApplication djiApplication;
     @Override
     protected void attachBaseContext(Context paramContext) {
         super.attachBaseContext(paramContext);

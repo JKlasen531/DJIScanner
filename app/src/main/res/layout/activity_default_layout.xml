@@ -198,12 +198,29 @@
         android:visibility="invisible"
         tools:ignore="RtlHardcoded"/>
 
+    <Button
+        android:id="@+id/btn_startMission"
+        android:layout_width="38dp"
+        android:layout_height="30dp"
+        android:layout_below="@id/CameraCapturePanel"
+        android:layout_alignStart="@+id/CameraCapturePanel"
+        android:visibility="visible" />
+
+    <Button
+        android:id="@+id/btn_mediaManager"
+        android:layout_width="38dp"
+        android:layout_height="30dp"
+        android:layout_alignStart="@+id/CameraCapturePanel"
+        android:layout_below="@id/btn_startMission"
+        android:background="@drawable/playback"
+        android:visibility="visible" />
+
     <!-- Pre-flight checklist panel -->
-    <dji.ux.panel.PreFlightCheckListPanel
+    <!--<dji.ux.panel.PreFlightCheckListPanel
         android:layout_width="400dp"
         android:layout_height="wrap_content"
         android:layout_below="@id/signal"
         custom:excludeItem="ESCStatus"
-        android:visibility="gone"/>
+        android:visibility="gone"/>-->
 
 </RelativeLayout>

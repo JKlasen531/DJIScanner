@@ -33,9 +33,10 @@ import dji.sdk.mission.MissionControl;
 import dji.sdk.mission.waypoint.WaypointMissionOperator;
 import dji.sdk.mission.waypoint.WaypointMissionOperatorListener;
 
-public class DefaultLayoutActivity extends AppCompatActivity implements View.OnClickListener {
+public class DefaultLayoutActivity extends AppCompatActivity implements View.OnClickListener
+ {
 
-    /*private Button mMediaManagerBtn;
+    private Button mMediaManagerBtn;
     private Button startMissionBtn;
 
     private WaypointMissionOperator waypointMissionOperator;
@@ -47,60 +48,61 @@ public class DefaultLayoutActivity extends AppCompatActivity implements View.OnC
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i("DLA","set Content View");
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.VIBRATE,
-                            Manifest.permission.INTERNET, Manifest.permission.ACCESS_WIFI_STATE,
-                            Manifest.permission.WAKE_LOCK, Manifest.permission.ACCESS_COARSE_LOCATION,
-                            Manifest.permission.ACCESS_NETWORK_STATE, Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.CHANGE_WIFI_STATE, Manifest.permission.MOUNT_UNMOUNT_FILESYSTEMS,
-                            Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.SYSTEM_ALERT_WINDOW,
-                            Manifest.permission.READ_PHONE_STATE,
-                    }
-                    , 1);
-        }
 
         setContentView(R.layout.activity_default_layout);
 
-        /*mMediaManagerBtn = findViewById(R.id.btn_mediaManager);
+        mMediaManagerBtn = findViewById(R.id.btn_mediaManager);
         mMediaManagerBtn.setOnClickListener(this);
         startMissionBtn = findViewById(R.id.btn_startMission);
-        startMissionBtn.setOnClickListener(this);*/
+        startMissionBtn.setOnClickListener(this);
         //add buttons to stop/pause mission
 
-        /*if(waypointMissionOperator == null) {
+        if(waypointMissionOperator == null) {
             waypointMissionOperator = MissionControl.getInstance().getWaypointMissionOperator();
-        }*/
-        //mission = createTestWaypointMission();
-        //DJIError djiError = waypointMissionOperator.loadMission(mission);
-        //showResultToast(djiError);
+        }
+        mission = createTestWaypointMission();
+        DJIError djiError = waypointMissionOperator.loadMission(mission);
+        Log.i("Activity","Mission loaded: " + String.valueOf(djiError == null));
+        showResultToast(djiError);
+        waypointMissionOperator.uploadMission(new CommonCallbacks.CompletionCallback() {
+            @Override
+            public void onResult(DJIError djiError) {
+                if(djiError != null) {
+                    Log.i("Activity","error during upload, retrying : " + djiError.getDescription());
+                    waypointMissionOperator.retryUploadMission(null);
+                }
+            }
+        });
+        Log.i("Activity",String.valueOf(waypointMissionOperator.getCurrentState()));
     }
 
     @Override
     public void onClick(View v) {
-        /*switch (v.getId()) {
+        switch (v.getId()) {
             case R.id.btn_mediaManager: {
+                Log.i("UXSDK","Media activity starting");
                 Intent intent = new Intent(this, MediaManagerActivity.class);
                 startActivity(intent);
                 break;
             }
             case R.id.btn_startMission: {
-                /*if(mission != null) {
+                if(mission != null) {
                     waypointMissionOperator.startMission(new CommonCallbacks.CompletionCallback() {
                         @Override
                         public void onResult(DJIError djiError) {
                             showResultToast(djiError);
+                            Log.i("Result", djiError == null ? "no error" : djiError.getDescription());
                         }
                     });
+                    Log.i("Mission","mission started");
                 } else {
                     Log.i("mission start", "something went wrong, mission is null");
-                }*/
-                /*Log.e("ONClick","Mission start Button");
+                }
                 break;
             }
             default:
                 break;
-        }*/
+        }
     }
 
     private void showResultToast(DJIError djiError) {
@@ -111,35 +113,45 @@ public class DefaultLayoutActivity extends AppCompatActivity implements View.OnC
     //Timeline mission or waypoint mission
     //add something to customize the mission
 
-    /*private WaypointMission createTestWaypointMission() {
+    private WaypointMission createTestWaypointMission() {
         WaypointMission.Builder builder = new WaypointMission.Builder();
         double baseLatitude = 22;
         double baseLongitude = 113;
-        Object latitudeValue = KeyManager.getInstance().getValue((FlightControllerKey.create(FlightControllerKey.HOME_LOCATION_LATITUDE)));
+        /*Object latitudeValue = KeyManager.getInstance().getValue((FlightControllerKey.create(FlightControllerKey.HOME_LOCATION_LATITUDE)));
         Object longitudeValue = KeyManager.getInstance().getValue((FlightControllerKey.create(FlightControllerKey.HOME_LOCATION_LONGITUDE)));
         if(latitudeValue != null && latitudeValue instanceof Double) {
             baseLatitude = (double)latitudeValue;
         }
         if(longitudeValue != null && longitudeValue instanceof Double) {
             baseLongitude = (double)longitudeValue;
-        }
+        }*/
 
         final float baseAltitude = 50.0f;
+        List<Waypoint> waypointList = new ArrayList<>();
         builder.autoFlightSpeed(5f);
         builder.maxFlightSpeed(10f);
-        builder.setExitMissionOnRCSignalLostEnabled(false);
-        // change to go back to waypoint 1 maybe
-        builder.finishedAction(WaypointMissionFinishedAction.NO_ACTION);
-        // maybe WaypointMissionFlightPathMode.CURVED
-        builder.flightPathMode(WaypointMissionFlightPathMode.NORMAL);
         builder.gotoFirstWaypointMode(WaypointMissionGotoWaypointMode.SAFELY);
+        builder.finishedAction(WaypointMissionFinishedAction.NO_ACTION);
         builder.headingMode(WaypointMissionHeadingMode.AUTO);
+        builder.flightPathMode(WaypointMissionFlightPathMode.NORMAL);
+        builder.setExitMissionOnRCSignalLostEnabled(true);
+        builder.setGimbalPitchRotationEnabled(true);
         builder.repeatTimes(1);
+
+        // change to go back to waypoint 1 maybe
+        // maybe WaypointMissionFlightPathMode.CURVED
         //create Waypoints and add them to the builder
+
         final Waypoint waypoint = new Waypoint(22, 113, 50.0f);
-        waypoint.addAction(new WaypointAction(WaypointActionType.CAMERA_FOCUS,1));
-        waypoint.addAction(new WaypointAction(WaypointActionType.START_TAKE_PHOTO,1));
+        waypoint.addAction(new WaypointAction(WaypointActionType.ROTATE_AIRCRAFT,0));
+        //waypoint.addAction(new WaypointAction(WaypointActionType.CAMERA_FOCUS,1));
+        //waypoint.addAction(new WaypointAction(WaypointActionType.START_TAKE_PHOTO,1));
+        final Waypoint waypoint2 = new Waypoint(30, 113, 50.0f);
+        final Waypoint waypoint3 = new Waypoint(30, 123, 50.0f);
         builder.addWaypoint(waypoint);
+        builder.addWaypoint(waypoint2);
+        builder.addWaypoint(waypoint3);
+        Log.i("Mission Complete:",String.valueOf(builder.isMissionComplete()));
         return builder.build();
-    }*/
+    }
 }

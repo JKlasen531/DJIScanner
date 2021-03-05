@@ -65,7 +65,6 @@ public class DJIScannerApplication extends Application{
          * the SDK Registration result and the product changing.
          */
         mDJISDKManagerCallback = new DJISDKManager.SDKManagerCallback() {
-
             //Listens to the SDK registration result
             @Override
             public void onRegister(DJIError djiError) {
@@ -159,7 +158,7 @@ public class DJIScannerApplication extends Application{
         //Check the permissions before registering the application for android system 6.0 above
     }
 
-    /*public static synchronized Aircraft getAircraftInstance() {
+    public static synchronized Aircraft getAircraftInstance() {
         if (!isAircraftConnected()) {
             return null;
         }
@@ -202,7 +201,7 @@ public class DJIScannerApplication extends Application{
     public static boolean isPlaybackAvailable() {
         return isCameraModuleAvailable() &&
                 (null != DJIScannerApplication.getProductInstance().getCamera().getPlaybackManager());
-    }*/
+    }
 
     private void notifyStatusChange() {
         mHandler.removeCallbacks(updateRunnable);

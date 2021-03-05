@@ -1,11 +1,13 @@
 package com.example.djiscanner;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,9 +39,7 @@ import dji.sdk.media.FetchMediaTaskScheduler;
 import dji.sdk.media.MediaFile;
 import dji.sdk.media.MediaManager;
 
-public class MediaManagerActivity {
-
-}/*extends android.app.Activity implements View.OnClickListener{
+public class MediaManagerActivity extends android.app.Activity implements View.OnClickListener{
 
 
     private static final String TAG = Activity.class.getName();
@@ -172,7 +172,6 @@ public class MediaManagerActivity {
         mPauseBtn.setOnClickListener(this);
         mStopBtn.setOnClickListener(this);
         mMoveToBtn.setOnClickListener(this);
-
     }
 
     private void showProgressDialog() {
@@ -254,6 +253,7 @@ public class MediaManagerActivity {
                         @Override
                         public void onResult(DJIError error) {
                             if (error == null) {
+                                Log.i(TAG,"camera mode set");
                                 DJILog.e(TAG, "Set cameraMode success");
                                 showProgressDialog();
                                 getFileList();
@@ -749,5 +749,5 @@ public class MediaManagerActivity {
         }
     }
 
-}*/
+}
 
