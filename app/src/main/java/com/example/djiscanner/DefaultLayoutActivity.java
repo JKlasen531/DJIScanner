@@ -42,7 +42,7 @@ public class DefaultLayoutActivity extends AppCompatActivity implements View.OnC
     private WaypointMissionOperator waypointMissionOperator;
     private WaypointMission mission;
     private WaypointMissionOperatorListener listener;
-    private final int WAYPOINT_COUNT=-1; //set value once mission is done*/
+    private final int WAYPOINT_COUNT=-1; //set value once mission is done
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,7 +86,7 @@ public class DefaultLayoutActivity extends AppCompatActivity implements View.OnC
                 break;
             }
             case R.id.btn_startMission: {
-                if(mission != null) {
+                /*if(mission != null) {
                     waypointMissionOperator.startMission(new CommonCallbacks.CompletionCallback() {
                         @Override
                         public void onResult(DJIError djiError) {
@@ -97,7 +97,10 @@ public class DefaultLayoutActivity extends AppCompatActivity implements View.OnC
                     Log.i("Mission","mission started");
                 } else {
                     Log.i("mission start", "something went wrong, mission is null");
-                }
+                }*/
+                Intent intent = new Intent(this,MissionTestActivity.class);
+                //Intent intent = new Intent(this,TimelineMissionActivity.class);
+                startActivity(intent);
                 break;
             }
             default:

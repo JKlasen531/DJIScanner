@@ -87,6 +87,8 @@
             android:screenOrientation="landscape"/>
         <activity android:name=".MediaManagerActivity"
             android:screenOrientation="landscape"/>
+        <activity android:name=".MissionTestActivity"
+            android:screenOrientation="landscape"/>
     </application>
 
 </manifest>
